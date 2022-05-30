@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="rt1_assignment3" type="master.py" name="all_modes" output="screen"/>
+  
+</launch>
