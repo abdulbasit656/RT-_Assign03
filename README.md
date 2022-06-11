@@ -68,5 +68,10 @@ To drive the robot first run the following command in new terminal:
 
 The robot.launch file allows to execute the all_modes and teleop_keyboard_twist nodes
 
+Flowchart
+---------
+![RT1_assign03](https://user-images.githubusercontent.com/17598805/173172742-de52bbe6-effa-439f-b0f7-b69f1fa1a6b0.png)
+---------
+
 
 ROS | Python | Autonomous Drive | Teleop | Collision Avoidance 
