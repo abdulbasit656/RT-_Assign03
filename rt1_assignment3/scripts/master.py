@@ -39,7 +39,7 @@ def mode_one():
     
     return_system = False
 
-    while not return_system:
+    while return_system == False:
 
         ## renew the system
         os.system('clear')
@@ -57,44 +57,48 @@ def mode_one():
         
         #Send the goal pose to the MoveBaseAction server
         client.send_goal(my_goal)
-        
-        abort_key = str(input("press 'c' to cancel goal position"))
 
-        # Allow 1 minute to get there
-        timeout = rospy.Duration(60)
+        print("press 'c' to cancel goal position")
         
-        if not timeout:
-            if abort_key == 'c' or abort_key == 'C':
+        # Allow 1 minute to get there
+        duration = rospy.Duration(60)
+                
+        #while True:                        
+            # If robot didn't get there in time, abort the goal
+        if not duration: 
+            rospy.loginfo("Timed out achieving goal position!")
+            client.cancel_goal()
+            rospy.loginfo("goal has not been achieved in allocated time")
+            stop_vel.linear.x = 0
+            stop_vel.angular.z = 0
+            pub_vel.publish(stop_vel)
+            
+        elif getkey() == 'c' or getkey() == 'C':
                 client.cancel_goal()
                 rospy.loginfo("goal has been canceled")
             
-            stop_vel.linear.x = 0
-            stop_vel.angular.z = 0
-            pub_vel.publish(stop_vel)
-
-        # If robot didn't get there in time, abort the goal
-        elif timeout:
-            rospy.loginfo("Timed out achieving goal position!")
-            client.cancel_goal()
-            
-            stop_vel.linear.x = 0
-            stop_vel.angular.z = 0
-            pub_vel.publish(stop_vel)
-            
+                stop_vel.linear.x = 0
+                stop_vel.angular.z = 0
+                pub_vel.publish(stop_vel)
                     
         else:
             # We made it!
             status = client.get_state()
             if status == actionlib.GoalStatus.SUCCEEDED:
                 rospy.loginfo("Goal succeeded!")
-
-        return_system = True
-        
-    return return_system
+            #return
+        # if you want to provide new goal
+        again = input("Do you want to provide new goal? \nIf yes, press [y] or [Y]: \n")
+        if again == 'y' or again == 'Y':
+            return_system = False
+        else:
+            return_system = True
+    return 1
 
 #########################################################################################
-
-def teleop():
+# to drive robot manually
+def mode_two():
+    os.system('clear')
     rospy.loginfo("teleop node starting..")
     pakage = 'rt1_assignment3'
     executable = 'teleop.py'
@@ -105,14 +109,23 @@ def teleop():
     launch.start()
     script = launch.launch(node)
     
-    key = getkey()
-    if key == 'r':
-        #rospy.signal_shutdown("return to main menu")
-        return False
-    else:
-        rospy.loginfo(script.is_alive())
+    rospy.loginfo(script.is_alive())
+    
+    print("Drive it...")
+    #return_v = True
+    #while return_v:
+        ## start controlling the robot and publish
+    #    teleop_keys() 
+    #    time.sleep(0.2)
+    #    if return_v is False: 
+    #        break 
+    return 1
 
+
+############################################################
+#SECOND WAY TWO DRIVE ROBOT MANUALLY
 # Control keys function to drive robot manually
+
 def teleop_keys():
  
     global vel   
@@ -147,40 +160,6 @@ def teleop_keys():
     pub_vel.publish(vel) 
     return 1
 
-# to drive robot manually
-def mode_two():
-    os.system('clear')
-    
-    msg = """ Manual driving is activated
-    
-Reading from the keyboard  and Publishing to Twist!
----------------------------
-Moving around:
-        i    
-   j    k    l
-        ,     
-        
-For Holonomic mode (strafing), hold down the shift key:
----------------------------
-        I     
-   J    K    L
-        <     
-   
-Press Q or q to quit
-   
-   """
-
-    print(msg)
-
-    #return_v = True
-    while True:
-        ## start controlling the robot and publish
-        return_v = teleop()		#teleop_keys() 
-        print(return_v)
-        time.sleep(0.2)
-        if return_v is False: 
-            break #exit()
-    return
 ##############################################################################
 
 def clbk_laser(msg):
@@ -323,11 +302,11 @@ def main():
     '''
 
     print(msg)
-    exit = False
+    
     rospy.init_node('all_modes')
     sub = rospy.Subscriber('/scan', LaserScan, clbk_laser)
 
-    while not rospy.is_shutdown() and not exit:
+    while not rospy.is_shutdown():
         while True:
             try:
                 key = int(input("Choose the driving mode of the robot: "))
@@ -344,7 +323,8 @@ def main():
             mode_three()
                 
         elif key == 4:
-            exit = True
+            exit()
+            
         else:
             rospy.loginfo("Invalid input")
     
